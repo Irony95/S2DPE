@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.shape.Line?>
+
+<AnchorPane minHeight="500.0" minWidth="300.0" prefHeight="700.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.EngineMasterController">
+   <children>
+      <Button fx:id="btnPausePlay" layoutX="23.0" layoutY="24.0" mnemonicParsing="false" onAction="#onPlayClicked" prefHeight="31.0" prefWidth="65.0" text="Play" AnchorPane.leftAnchor="10.0" />
+      <Button fx:id="btnStep" layoutX="337.0" layoutY="24.0" mnemonicParsing="false" onAction="#onStepClicked" text="Step" AnchorPane.rightAnchor="10.0" />
+      <TextField fx:id="tfTimeStepSize" layoutX="238.0" layoutY="24.0" prefHeight="25.0" prefWidth="73.0" promptText="time step" text="0.016666" AnchorPane.rightAnchor="90.0" />
+      <CheckBox fx:id="cbApplyFriction" layoutX="21.0" layoutY="61.0" mnemonicParsing="false" onAction="#onApplyFrictionInteracted" selected="true" text="Apply friction" AnchorPane.leftAnchor="10.0" />
+      <TextField fx:id="tfAirDensity" layoutX="238.0" layoutY="61.0" onAction="#onAirDensityChanged" prefHeight="25.0" prefWidth="73.0" promptText="time step" text="1.293" AnchorPane.rightAnchor="90.0" />
+      <Label layoutX="321.0" layoutY="65.0" text="Air density" AnchorPane.rightAnchor="10.0" />
+      <ComboBox fx:id="cobObject" layoutX="15.0" layoutY="139.0" onAction="#setToObjectSettings" prefWidth="150.0" promptText="Circle RigidBody" AnchorPane.leftAnchor="15.0" />
+      <Line endX="1000.0" layoutX="101.0" layoutY="135.0" startX="-100.0" stroke="#7b7b7b" strokeWidth="2.0" />
+      <Button layoutX="10.0" layoutY="458.0" mnemonicParsing="false" text="Place" AnchorPane.leftAnchor="10.0" />
+      <TabPane fx:id="tpSceneLists" layoutX="-5.0" layoutY="533.0" prefHeight="227.0" prefWidth="400.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="500.0">
+        <tabs>
+          <Tab text="Entities">
+               <content>
+                  <ListView fx:id="lvEntities" prefHeight="132.0" prefWidth="400.0" />
+               </content>
+            </Tab>
+          <Tab text="Forces">
+               <content>
+                  <ListView fx:id="lvForces" prefHeight="200.0" prefWidth="200.0" />
+               </content>
+            </Tab>
+        </tabs>
+      </TabPane>
+      <Label layoutX="10.0" layoutY="429.0" text="Material" AnchorPane.leftAnchor="10.0" />
+      <ComboBox fx:id="cobMaterial" layoutX="90.0" layoutY="424.0" prefWidth="150.0" promptText="Simple Material" AnchorPane.leftAnchor="90.0" />
+      <Button layoutX="296.0" layoutY="458.0" mnemonicParsing="false" onAction="#startMaterialWindow" text="New Material" AnchorPane.rightAnchor="10.666666666666686" />
+      <Line endX="1000.0" layoutX="101.0" layoutY="375.0" startX="-100.0" stroke="#7b7b7b" strokeWidth="2.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="500.0" />
+      <Button fx:id="fxDeleteButton" layoutX="11.0" layoutY="564.0" mnemonicParsing="false" onAction="#onDeleteClicked" text="Delete Selected" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="10.0" />
+      <ToggleButton fx:id="tbShowWireframe" layoutX="85.0" layoutY="24.0" mnemonicParsing="false" onAction="#showWireframeClicked" text="Wireframe" AnchorPane.leftAnchor="90.0" />
+      <Pane fx:id="paneSettings" layoutX="10.0" layoutY="176.0" prefHeight="245.0" prefWidth="400.0" AnchorPane.bottomAnchor="280.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="180.0" />
+      <TextField fx:id="tfSaveSceneName" layoutX="16.0" layoutY="97.0" promptText="file name" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="100.0" />
+      <Button layoutX="173.0" layoutY="97.0" mnemonicParsing="false" onAction="#onSaveScene" text="Save Scene" AnchorPane.topAnchor="100.0" />
+      <Button layoutX="268.0" layoutY="100.0" mnemonicParsing="false" onAction="#onLoadScene" text="Load Scene" AnchorPane.rightAnchor="48.0" AnchorPane.topAnchor="100.0" />
+   </children>
+</AnchorPane>
