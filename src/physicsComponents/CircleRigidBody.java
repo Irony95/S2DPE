@@ -3,12 +3,13 @@ package physicsComponents;
 import org.apache.commons.math4.legacy.linear.ArrayRealVector;
 import org.apache.commons.math4.legacy.linear.RealVector;
 
-import application.EngineCanvas;
+import Solvers.ImpulseSolver;
+import application.EngineWorld;
 import application.EngineProperties;
-import application.SceneObjects;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
+import world.SceneObjects;
 
 public class CircleRigidBody extends EntityUnit implements Drawable, CircleCollider {
 	
@@ -32,7 +33,7 @@ public class CircleRigidBody extends EntityUnit implements Drawable, CircleColli
 	}
 
 	@Override
-	public void vsCanvas(double width, double height) {
+	public void vsCanvas(double width, double height, double dt) {
 		//on the X axis
 		if (position.getEntry(0) + radius > width || position.getEntry(0) - radius < 0) {
 			RealVector normal = new ArrayRealVector(new double[] {0, 0});
@@ -40,9 +41,9 @@ public class CircleRigidBody extends EntityUnit implements Drawable, CircleColli
 			else { normal.setEntry(0, 1); }
 			RealVector[] impulses = ImpulseSolver.solveImpulse(this, null, normal, null);
 			if (impulses != null && impulses[0] != null) {
-				velocity = velocity.subtract(impulses[0].mapMultiply(invMass));
+				addForce(impulses[0].mapDivide(dt).mapMultiply(-1));
 				if (EngineProperties.applyFriction && impulses[1] != null) {
-					velocity = velocity.add(impulses[1].mapMultiply(invMass));
+					addForce(impulses[1].mapDivide(dt));
 				}
 			}
 			double penetrationDepth = position.getEntry(0) + radius > width ? 
@@ -56,9 +57,9 @@ public class CircleRigidBody extends EntityUnit implements Drawable, CircleColli
 			else { normal.setEntry(1, 1); }
 			RealVector[] impulses = ImpulseSolver.solveImpulse(this, null, normal, null);
 			if (impulses != null && impulses[0] != null) {
-				velocity = velocity.subtract(impulses[0].mapMultiply(invMass));
+				addForce(impulses[0].mapDivide(dt).mapMultiply(-1));
 				if (EngineProperties.applyFriction && impulses[1] != null) {
-					velocity = velocity.add(impulses[1].mapMultiply(invMass));
+					addForce(impulses[1].mapDivide(dt));
 				}
 			}
 			double penetrationDepth = position.getEntry(1) + radius > height ? 
@@ -68,27 +69,26 @@ public class CircleRigidBody extends EntityUnit implements Drawable, CircleColli
 	}
 
 	@Override
-	public void vsCircle(EntityUnit object, CircleCollider collider) {
+	public void vsCircle(EntityUnit object, CircleCollider collider, double dt) {
 		double objRadius = collider.getRadius();
 		double squaredDist = Math.pow(object.position.getEntry(0) - position.getEntry(0), 2) + 
 				Math.pow(object.position.getEntry(1) - position.getEntry(1), 2);
-	
-		//System.out.println(squaredDist);
+
 		if (squaredDist != 0 && squaredDist <= Math.pow(radius + objRadius, 2)) {
 			RealVector normal = (object.position.subtract(position)).unitVector();
 			RealVector[] impulses = ImpulseSolver.solveImpulse(this, object, normal);
 			
 			if (impulses == null || impulses[0] == null) { return; }
-			velocity = velocity.subtract(impulses[0].mapMultiply(invMass));		
-			object.velocity = object.velocity.add(impulses[0].mapMultiply(object.invMass));
+			addForce(impulses[0].mapDivide(dt).mapMultiply(-1));
+			object.addForce(impulses[0].mapDivide(dt));
 			
 			//positional correction
 			double penetrationDepth = (radius + objRadius) - position.getDistance(object.position);
 			ImpulseSolver.positionalCorrection(this, object, penetrationDepth, normal);
 			
 			if (EngineProperties.applyFriction && impulses[1] != null) {				
-				velocity = velocity.subtract(impulses[1].mapMultiply(invMass));
-				object.velocity = object.velocity.add(impulses[1].mapMultiply(object.invMass));
+				addForce(impulses[1].mapDivide(dt).mapMultiply(-1));
+				object.addForce(impulses[1].mapDivide(dt));
 			}
 		}
 	}
@@ -102,11 +102,12 @@ public class CircleRigidBody extends EntityUnit implements Drawable, CircleColli
 
 	@Override
 	public void drawWireframe(GraphicsContext gc, int index) {
+		gc.setTextAlign(TextAlignment.CENTER);
 		if (velocity.getL1Norm() > 20) {
-			EngineCanvas.DrawUtils.drawArrow(gc, position, velocity.unitVector(), 30);			
+			EngineWorld.DrawUtils.drawArrow(gc, position, velocity.unitVector(), 30);
+			EngineWorld.DrawUtils.writeVelocity(gc, position, velocity);			
 		}
 		gc.setFill(Color.WHITE);
-		gc.setTextAlign(TextAlignment.CENTER);
 		gc.fillText(SceneObjects.getInstance().getEntityName(index), position.getEntry(0), position.getEntry(1));
 		
 		gc.setStroke(this.color);
@@ -120,7 +121,7 @@ public class CircleRigidBody extends EntityUnit implements Drawable, CircleColli
 	}
 
 	@Override
-	public void vsPolygon(EntityUnit object, PolygonCollider collider) {
-		collider.vsCircle(this, this);
+	public void vsPolygon(EntityUnit object, PolygonCollider collider, double dt) {
+		collider.vsCircle(this, this, dt);
 	}
 }

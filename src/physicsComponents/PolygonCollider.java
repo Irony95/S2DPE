@@ -11,9 +11,9 @@ public interface PolygonCollider {
 	public RealVector getSupport(RealVector dir);
 	public double[] findAxisOfLeastPenetration(EntityUnit object, PolygonCollider collider);
 	
-	public void vsCircle(EntityUnit object, CircleCollider collider);
-	public void vsCanvas(double width, double height);
-	public void vsPolygon(EntityUnit object, PolygonCollider collider);
+	public void vsCircle(EntityUnit object, CircleCollider collider, double dt);
+	public void vsCanvas(double width, double height, double dt);
+	public void vsPolygon(EntityUnit object, PolygonCollider collider, double dt);
 	
 	public void applyRotationalAirResistance();
 }

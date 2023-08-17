@@ -8,26 +8,33 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.animation.AnimationTimer;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import physicsComponents.*;
+import world.ObjectSpawner;
+import world.SceneObjects;
+import world.ObjectSpawner.ObjectSelector;
 
 import java.util.ArrayList;
 import java.util.Random;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.input.InputMethodEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import java.io.FileOutputStream;
@@ -43,7 +50,7 @@ import java.io.ObjectInputStream;
 
 public class EngineMasterController {
 	private SceneObjects sceneObjects = SceneObjects.getInstance();
-	private EngineCanvas canvas;
+	private EngineWorld world;
 	AnimationTimer timer;
 	private long previousTime = 0;
 	
@@ -81,17 +88,22 @@ public class EngineMasterController {
     private ToggleButton tbShowWireframe;
     
     @FXML
+    public ToggleButton tbPlace;
+    
+    @FXML
     private TabPane tpSceneLists;
     
     @FXML
     private Pane paneSettings;
+    
+    private ParticleEntity mouseParticle;
+    public Spring mouseSpring;
 	
 	public void initialize() {
-		Random random = new Random();
 		sceneObjects.setEntityListView(lvEntities);
 		sceneObjects.setForceListView(lvForces);
-		GlobalGravity gravity = new GlobalGravity(0 * EngineProperties.getMetersPerPixel(),
-				9.8 * EngineProperties.getMetersPerPixel(), sceneObjects.entities);
+		GlobalGravity gravity = new GlobalGravity(0 * EngineProperties.getPixelsPerMeter(),
+				9.8 * EngineProperties.getPixelsPerMeter(), sceneObjects.entities);
 		sceneObjects.addForce("gravity", gravity);
 		
 		
@@ -100,16 +112,14 @@ public class EngineMasterController {
 		
 		Material stationaryMat = new Material("Stationary", 0, 0, 0, 0, 0);
 		stationaryMat.customMass = 0;
+		stationaryMat.customInertia = 0;
 		sceneObjects.materials.add(stationaryMat);
 		
-		Material losslessMat = new Material("Lossless", 0.001, 0, 0, 0, 1);
+		Material losslessMat = new Material("Perfect", 0.001, 0, 0, 0, 1);
 		sceneObjects.materials.add(losslessMat);
 		
-		Material basketballMat = new Material("Basketball", 0.001, 0.54, 0.5f, 0.2f, 0.6);
-		sceneObjects.materials.add(basketballMat);
-		
 		Material heavyMat = new Material("Heavy", 0.001, 0.54, 0.5f, 0.2f, 0.60);
-		heavyMat.customMass = 999999;
+		heavyMat.customMass = 999999999;
 		sceneObjects.materials.add(heavyMat);
 		updateMaterialComboBox();
 		
@@ -122,81 +132,9 @@ public class EngineMasterController {
 		cobObject.getItems().add("Global Gravity");
 		cobObject.getItems().add("Joint");
 		cobObject.getSelectionModel().select(0);
-		setToObjectSettings(null);	 
+		setToObjectSettings(null);	
 		
-//		//double pendulum
-//		ParticleEntity particle1 = new ParticleEntity(300, 100, 0, 0, stationaryMat, Color.BLUE);
-//		ParticleEntity particle2 = new ParticleEntity(500, 100, 0, 0, simpleMat, Color.RED);
-//		ParticleEntity particle3 = new ParticleEntity(500, 300, 0, 0, simpleMat, Color.RED);
-//		//System.out.println(particle1.mass);
-//
-//		Spring spring = new Spring((EntityUnit)particle1, (EntityUnit)particle2, 99999, 200.0);
-//		Spring spring2 = new Spring((EntityUnit)particle2, (EntityUnit)particle3, 99999, 200.0);
-//
-//		sceneObjects.forceActors.add(spring);
-//		sceneObjects.forceActors.add(spring2);
-//		sceneObjects.entities.add(particle1);
-//		sceneObjects.entities.add(particle2);
-//		sceneObjects.entities.add(particle3);
-		
-		//random particles
-//		for (int i = 0;i < 200;i ++) {
-//				CircleRigidBody ball = new CircleRigidBody(random.nextInt(600) + 50, random.nextInt(200)+ 50,
-//						0, 0, simpleMat, random.nextInt(15) + 5, 
-//						Color.rgb(random.nextInt(200) + 55 , random.nextInt(200) + 55, random.nextInt(200) + 55));
-//			sceneObjects.addEntity("ball" + String.valueOf(i), ball);
-//		}
-//		//demolition
-//		for (int i = 0;i < 2;i ++) {
-//			for (int j = 0;j < 10;j ++) {
-//				
-//				PolygonRigidBody polyBody = PolygonRigidBody.Builder.newInstance()
-//						.setColor(Color.rgb(random.nextInt(200) + 55 , random.nextInt(200) + 55, random.nextInt(200) + 55))
-//						.setRotations(0, 0.0)
-//						.setVelocity(0, 00)
-//						.addPoint(50, 0)			
-//						.addPoint(50, 50)
-//						.addPoint(0, 50)
-//						.build(200 + i*50, 580-j*50, simpleMat);
-//				sceneObjects.addEntity("cube " + String.valueOf(i+j), polyBody);
-//				
-//			}
-//		}		
-
-//		CircleRigidBody ball = new CircleRigidBody(650, 200,
-//				-1000, 00, simpleMat, 50, 
-//				Color.RED);
-//		sceneObjects.addEntity("DeathBall", ball);
-//		//random triangles
-//		for (int i = 0;i < 40;i ++) {
-//			PolygonRigidBody polyBody = PolygonRigidBody.Builder.newInstance()
-//					.setColor(Color.rgb(random.nextInt(200) + 55 , random.nextInt(200) + 55, random.nextInt(200) + 55))
-//					.setRotations(0, random.nextDouble(2*Math.PI))
-//					.setVelocity(0, 00)
-//					.addPoint(50, 0)			
-//					.addPoint(50, 50)
-//					.build(random.nextInt(900), random.nextInt(700), simpleMat);
-//			sceneObjects.addEntity("triangle " + String.valueOf(i), polyBody);
-//		}
-		
-//		//newtons Cradle
-//		ParticleEntity anchor = new ParticleEntity(300, 100, 0, 0, stationaryMat, Color.RED);
-//		CircleRigidBody newtonsBall = new CircleRigidBody(100, 100, 0, 0, losslessMat, 50, Color.BLUE);
-//		Spring wire = new Spring(anchor, newtonsBall, 99999, 200);
-//		sceneObjects.addEntity("Anchor", anchor);
-//		sceneObjects.addEntity("Ball", newtonsBall);
-//		sceneObjects.addForce("Wiree", wire);
-//		
-//		for (int i = 0;i < 5;i ++) {
-//			anchor = new ParticleEntity(400 + i * 100, 100, 0, 0, stationaryMat, Color.RED);
-//			newtonsBall = new CircleRigidBody(400 + i * 100, 300, 0, 0, losslessMat, 50, Color.BLUE);
-//			wire = new Spring(anchor, newtonsBall, 99999, 200);
-//			sceneObjects.addEntity("Anchor " + i, anchor);
-//			sceneObjects.addEntity("Ball " + i, newtonsBall);
-//			
-//			sceneObjects.addForce("wire " + i, wire);
-//			}
-		
+		mouseParticle = new ParticleEntity(0, 0, 0, 0, stationaryMat, Color.TRANSPARENT);	
 		
 		timer = new AnimationTimer() {
 
@@ -205,70 +143,113 @@ public class EngineMasterController {
 			public void handle(long now) {
 				if (previousTime == 0) {previousTime = now; return; }
 				double deltaSecond = (now-previousTime)/1_000_000_000.0;
-				runSimulation(deltaSecond);
+				if (EngineProperties.isPlaying) {
+					runSimulation(deltaSecond);
+				}
 				previousTime = now;
+				
+				world.drawFrame((float) (1f/deltaSecond));
 			}	
 		};
-		
-		
+		timer.start();		
 	}
 	
-	public void setCanvas(EngineCanvas controller) {
-		canvas = controller;
-		canvas.drawFrame((float) (1f/60));
+	public void setCanvas(EngineWorld controller) {
+		world = controller;
+		
+		world.canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>() {
+			@Override
+			public void handle(MouseEvent arg0) {
+				mouseParticle.position.setEntry(0, arg0.getX());
+				mouseParticle.position.setEntry(1, arg0.getY());
+				double closestDist = Double.POSITIVE_INFINITY;
+				EntityUnit object = null;
+				for (int i =0; i< sceneObjects.entities.size();i++) {
+					double dist = sceneObjects.entities.get(i).position.getDistance(mouseParticle.position);
+					if (dist < closestDist) {
+						closestDist = dist;
+						object = sceneObjects.entities.get(i);											
+					}
+				}
+				if (object == null) { return; }
+				mouseSpring = new Spring(mouseParticle, object, 70, 0, 10);
+			}			
+		});
+		world.canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
+			@Override
+			public void handle(MouseEvent arg0) {
+				mouseSpring = null;				
+			}			
+		});
+		world.canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent>() {
+			@Override
+			public void handle(MouseEvent arg0) {	
+				boolean runs = world.canvas.getOnMouseClicked() == null;
+				if (tbPlace.isSelected() && runs) { 
+					mouseSpring = null;
+					return;
+				}
+				mouseParticle.position.setEntry(0, arg0.getX());
+				mouseParticle.position.setEntry(1, arg0.getY());
+			}			
+		});
 	}
 	
 	public void runSimulation(double deltaSecond) {
 		for (int step =0;step < EngineProperties.getStepCount();step++) {
+			double stepSecondsDelta = deltaSecond/EngineProperties.getStepCount();
 			
 			for (int i =0;i < sceneObjects.forceActors.size();i++) {
 				sceneObjects.forceActors.get(i).applyForce();
 			}
 			
+			boolean runs = world.canvas.getOnMouseClicked() == null;
+			if (mouseSpring != null && !tbPlace.isSelected() && runs) {
+				mouseSpring.applyForce();
+			}
 			for (int i = 0;i < sceneObjects.entities.size();i++) {
 				EntityUnit object = sceneObjects.entities.get(i);
 				//weight is 9.8N/kg downwards
 				
 				if (object instanceof CircleCollider) {
 					CircleCollider collider = ((CircleCollider) object); 
-					collider.vsCanvas(canvas.canvas.getWidth(), canvas.canvas.getHeight());	
+					collider.vsCanvas(world.canvas.getWidth(), world.canvas.getHeight(), stepSecondsDelta);	
 
 					for (int j = i + 1;j < sceneObjects.entities.size();j++) {
 						EntityUnit checked = sceneObjects.entities.get(j);		
 						if (checked instanceof CircleCollider) {
 							CircleCollider colliderB = (CircleCollider) checked;
-							collider.vsCircle(checked, colliderB);
+							collider.vsCircle(checked, colliderB, stepSecondsDelta);
 						}
 						else if (checked instanceof PolygonCollider) {
 							PolygonCollider colliderB = (PolygonCollider) checked;
-							collider.vsPolygon(checked, colliderB);
+							collider.vsPolygon(checked, colliderB, stepSecondsDelta);
 						}
 					}
 				}
 				if (object instanceof PolygonCollider) {
 					PolygonCollider collider = (PolygonCollider) object;
-					collider.vsCanvas(canvas.canvas.getWidth(), canvas.canvas.getHeight());
+					collider.vsCanvas(world.canvas.getWidth(), world.canvas.getHeight(), stepSecondsDelta);
 					for (int j = i + 1;j < sceneObjects.entities.size();j++) {
 						EntityUnit checked = sceneObjects.entities.get(j);		
 						if (checked instanceof PolygonCollider) {
 							PolygonCollider colliderB = (PolygonCollider) checked;
-							collider.vsPolygon(checked, colliderB);
+							collider.vsPolygon(checked, colliderB, stepSecondsDelta);
 							
 						}
 						else if (checked instanceof CircleCollider) {
 							CircleCollider colliderB = (CircleCollider) checked;
-							collider.vsCircle(checked, colliderB);
+							collider.vsCircle(checked, colliderB, stepSecondsDelta);
 						}
 					}
 					collider.applyRotationalAirResistance();
 				}
 
 				object.applyAirResistance();
-				object.update(deltaSecond/EngineProperties.getStepCount());
+				object.update(stepSecondsDelta);
 			}
 						
-		}
-		canvas.drawFrame((float) (1f/deltaSecond));
+		}		
 	}
     
     @FXML
@@ -281,26 +262,26 @@ public class EngineMasterController {
     void onAirDensityChanged(ActionEvent event) {
     	if (Double.parseDouble(tfAirDensity.getText()) == Double.NaN) {return; }
     	EngineProperties.airDensity = Double.parseDouble(tfAirDensity.getText())
-    			/ Math.pow(EngineProperties.METERS_PER_PIXEL, 2);
+    			/ Math.pow(EngineProperties.getPixelsPerMeter(), 2);
     }
     
     @FXML
     void onPlayClicked(ActionEvent event) {
-    	if (!EngineProperties.isPlaying) { previousTime = 0; timer.start(); btnPausePlay.setText("Stop"); }
-    	else { timer.stop(); btnPausePlay.setText("Play"); }
-    	EngineProperties.isPlaying = !EngineProperties.isPlaying;
+    	if (!EngineProperties.isPlaying) {
+    		btnPausePlay.setText("Stop");
+		}
+    	else { btnPausePlay.setText("Play"); }
+    	EngineProperties.isPlaying = !EngineProperties.isPlaying;    	
     }
     
     @FXML
     void onApplyFrictionInteracted(ActionEvent event) {
 		EngineProperties.applyFriction = cbApplyFriction.isSelected();
-		System.out.println(EngineProperties.applyFriction );
     }
     
     @FXML
     void showWireframeClicked(ActionEvent event) {
     	EngineProperties.showWireframe = tbShowWireframe.isSelected();
-    	canvas.drawFrame(0);
     }
     
     @FXML
@@ -310,13 +291,11 @@ public class EngineMasterController {
     	case 0:
     		index = lvEntities.getSelectionModel().getSelectedIndex();
     		sceneObjects.deleteEntity(index);
-    		canvas.drawFrame(0);
     		break;
     		
     	case 1:
     		index = lvForces.getSelectionModel().getSelectedIndex();
     		sceneObjects.deleteForce(index);
-    		canvas.drawFrame(0);
     		break;
     	}
     }
@@ -332,11 +311,12 @@ public class EngineMasterController {
     @FXML
     void startMaterialWindow(ActionEvent event) {
     	try {
-    		FXMLLoader loader = new FXMLLoader(getClass().getResource("MaterialSettings.fxml"));
+    		FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/MaterialSettings.fxml"));
         	AnchorPane root =(AnchorPane)loader.load();
         	Scene scene2 = new Scene(root);          
         	scene2.getStylesheets().add(getClass().getResource("application.css").toExternalForm());        
         	Stage Window2 = new Stage();  
+        	Window2.setTitle("New Material");
         	Window2.setScene(scene2);
         	Window2.show();
         	
@@ -352,47 +332,255 @@ public class EngineMasterController {
     	paneSettings.getChildren().clear();
     	String filename = null;
     	String object = cobObject.getSelectionModel().getSelectedItem();
+    	ObjectSpawner.polygonPoints.clear();
     	if (object == null) { return; }
     	switch (object) {
 	    	case "Circle RigidBody":
-	    		filename = "CircleRigidBodySettings.fxml";
+	    		filename = "fxml/CircleRigidBodySettings.fxml";
 	    		break;
-	    	case "Polygon RigidBody":
-	    		filename = "PolygonRigidBodySettings.fxml";
+	    	case "Polygon RigidBody":	    		
+	    		filename = "fxml/PolygonRigidBodySettings.fxml";
 	    		break;
 	    	case "Particle Entity":
-	    		filename = "ParticleEntitySettings.fxml";
+	    		filename = "fxml/ParticleEntitySettings.fxml";
 	    		break;
 	    	case "Spring":
-	    		filename = "SpringSettings.fxml";
+	    		filename = "fxml/SpringSettings.fxml";
 	    		break;
 	    	case "Global Gravity":
-	    		filename = "GlobalGravitySettings.fxml";
+	    		filename = "fxml/GlobalGravitySettings.fxml";
 	    		break;
 	    	case "Joint":
-	    		filename = "JointSettings.fxml";
+	    		filename = "fxml/JointSettings.fxml";
 	    		break;
     	}
     	if (filename == null) { return; }
     	try {
     		FXMLLoader loader = new FXMLLoader(getClass().getResource(filename));
         	AnchorPane root =(AnchorPane)loader.load();
-        	paneSettings.getChildren().add(root);       	
+        	paneSettings.getChildren().add(root);  
+        	if (object == "Polygon RigidBody") {
+        		ToggleButton placeVerticesButton = ((ToggleButton)(root.lookup("#btnPlaceVertices")));
+	    		placeVerticesButton.setOnAction(actionEvent -> {	    	
+	    			if (placeVerticesButton.isSelected()) {
+	    				ObjectSpawner.polygonPoints.clear();
+	    				world.canvas.setOnMouseClicked(ObjectSpawner.placePolygonPoints(world));
+	    			}
+	    			else {	    				
+	    				world.canvas.setOnMouseClicked(null);
+	    			}
+	    		});
+        	}
+        	else if (object == "Spring") {
+        		
+        		ToggleButton selectObjectA = ((ToggleButton)(root.lookup("#btnObjectA")));
+        		ToggleButton selectObjectB = ((ToggleButton)(root.lookup("#btnObjectB")));
+        		TextField distanceField = ((TextField)(root.lookup("#tfRestLength")));
+        		
+        		ObjectSpawner.SelectorCallback callback = new ObjectSpawner.SelectorCallback() {					
+        			@Override
+        			public void callback() {
+        				if (ObjectSpawner.objectA != null && ObjectSpawner.objectB != null) {
+        					Double distance = ObjectSpawner.objectA.position
+        							.getDistance(ObjectSpawner.objectB.position);
+        					distanceField.setText(distance.toString());
+        				}
+        			}
+        		};
+        		
+        		selectObjectA.setOnAction(actionEvent -> {
+        			selectObjectB.setSelected(false);
+        			if (selectObjectA.isSelected()) {
+        				ObjectSpawner.objectA = null;
+        				selectObjectA.setText("Object A");
+        				world.canvas.setOnMouseClicked(
+        						ObjectSpawner.findAndSetObject(ObjectSpawner.ObjectSelector.A,
+								selectObjectA, callback, world.canvas));
+        			}
+        			else {
+        				world.canvas.setOnMouseClicked(null);
+        			}
+        		});
+        		selectObjectB.setOnAction(actionEvent -> {
+        			selectObjectA.setSelected(false);
+        			if (selectObjectB.isSelected()) {
+        				ObjectSpawner.objectB = null;
+        				selectObjectB.setText("Object B");
+        				world.canvas.setOnMouseClicked(
+        						ObjectSpawner.findAndSetObject(ObjectSpawner.ObjectSelector.B,
+								selectObjectB, callback, world.canvas));
+        			}
+        			else {
+        				world.canvas.setOnMouseClicked(null);
+        			}
+        		});
+        	}
+        	
+    		else if (object == "Joint") {        		
+        		ToggleButton selectObjectA = ((ToggleButton)(root.lookup("#btnObjectA")));
+        		ToggleButton selectObjectB = ((ToggleButton)(root.lookup("#btnObjectB")));        		
+        		
+        		selectObjectA.setOnAction(actionEvent -> {
+        			selectObjectB.setSelected(false);
+        			if (selectObjectA.isSelected()) {
+        				ObjectSpawner.objectA = null;
+        				selectObjectA.setText("Object A");
+        				world.canvas.setOnMouseClicked(
+        						ObjectSpawner.findAndSetObject(ObjectSpawner.ObjectSelector.A,
+								selectObjectA, null, world.canvas));
+        			}
+        			else {
+        				world.canvas.setOnMouseClicked(null);
+        			}
+        		});
+        		selectObjectB.setOnAction(actionEvent -> {
+        			selectObjectA.setSelected(false);
+        			if (selectObjectB.isSelected()) {
+        				ObjectSpawner.objectB = null;
+        				selectObjectB.setText("Object B");
+        				world.canvas.setOnMouseClicked(
+        						ObjectSpawner.findAndSetObject(ObjectSpawner.ObjectSelector.B,
+								selectObjectB, null, world.canvas));
+        			}
+        			else {
+        				world.canvas.setOnMouseClicked(null);
+        			}
+        		});
+        	}
     	} catch (Exception e) {
     		e.printStackTrace();
+    	}  
+    }
+    
+    @FXML
+    void onPlaceClicked(ActionEvent event) {
+    	
+    	switch (cobObject.getSelectionModel().getSelectedItem()) {
+    		case "Circle RigidBody":
+    			spawningCircle();
+    			break;
+    		case "Polygon RigidBody":
+    			polygonPlaceVertices();
+    			break;
+    		case "Particle Entity":
+    			spawnParticleEntity();
+    			break;
+    		case "Spring":
+    			spawnSpring();
+    			break;
+    		case "Global Gravity":
+    			spawnGravity();
+    			break;
+    		case "Joint":
+    			spawnJoint();
+    			break;
     	}
     }
+    
+    void spawningCircle() {
+    	AnchorPane settings = (AnchorPane) paneSettings.lookup("#root");
+    	int matIndex = cobMaterial.getSelectionModel().getSelectedIndex();
+    	if (tbPlace.isSelected()) {
+    		ObjectSpawner.setChildrenDisable(settings, true);
+    		cobMaterial.setDisable(true);
+    		cobObject.setDisable(true);
+    		world.canvas.setOnMouseClicked(new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent arg0) {	
+					ObjectSpawner.spawnCircle(settings, matIndex, world.mouse.getEntry(0), world.mouse.getEntry(1));
+				}    			
+    		});
+    	}
+    	else {
+    		ObjectSpawner.setChildrenDisable(settings, false);
+    		world.canvas.setOnMouseClicked(null);
+    		cobMaterial.setDisable(false);
+    		cobObject.setDisable(false);
+    	}
+    }
+    
+    void spawnParticleEntity() {
+    	AnchorPane settings = (AnchorPane) paneSettings.lookup("#root");
+    	int matIndex = cobMaterial.getSelectionModel().getSelectedIndex();
+    	if (tbPlace.isSelected()) {    
+    		ObjectSpawner.setChildrenDisable(settings, true);
+    		cobMaterial.setDisable(true);
+    		cobObject.setDisable(true);
+    		world.canvas.setOnMouseClicked(new EventHandler<MouseEvent>() {
+    			@Override 
+    			public void handle(MouseEvent arg0) {  
+    				ObjectSpawner.spawnParticleEntity(settings, matIndex, world.mouse.getEntry(0), world.mouse.getEntry(1));
+    			}	
+    		}); 
+		}
+    	else {
+    		ObjectSpawner.setChildrenDisable(settings, false);
+    		world.canvas.setOnMouseClicked(null);
+    		cobMaterial.setDisable(false);
+    		cobObject.setDisable(false);
+    	}
+    }
+    
+    void polygonPlaceVertices() {    
+    	if (ObjectSpawner.polygonPoints.size() < 3) {
+    		tbPlace.setSelected(false);
+    		ObjectSpawner.polygonPoints.clear(); 
+    		return;
+    	}
+    	
+    	AnchorPane settings = (AnchorPane) paneSettings.lookup("#root");
+    	int matIndex = cobMaterial.getSelectionModel().getSelectedIndex();
+    	ToggleButton placeVerticesButton = ((ToggleButton)(settings.lookup("#btnPlaceVertices")));
+    	if (tbPlace.isSelected()) {     	
+    		ObjectSpawner.setChildrenDisable(paneSettings, true);
+    		cobMaterial.setDisable(true);
+    		cobObject.setDisable(true);
+    		placeVerticesButton.setSelected(false);
+    		//ObjectSpawner.spawnPolygonRigidBody(settings, matIndex);
+    		world.canvas.setOnMouseClicked(new EventHandler<MouseEvent>() {
+    			@Override
+    			public void handle(MouseEvent arg0) {
+    				ObjectSpawner.spawnPolygonRigidBody(settings, matIndex, world.mouse.getEntry(0), world.mouse.getEntry(1));
+    			}			
+    		});
+		}
+    	else {
+    		world.canvas.setOnMouseClicked(null); 
+    		ObjectSpawner.setChildrenDisable(paneSettings, false);
+    		cobMaterial.setDisable(false);
+    		cobObject.setDisable(false);     				    
+    	}				
+    }
+    
+    void spawnSpring() {
+    	tbPlace.setSelected(false);
+    	ObjectSpawner.spawnSpring((AnchorPane)paneSettings.lookup("#root"));
+    }    
+    
+    void spawnGravity() {
+    	tbPlace.setSelected(false);
+    	ObjectSpawner.spawnGravity((AnchorPane)paneSettings.lookup("#root"));  	
+    }
+    
+    void spawnJoint() {
+    	tbPlace.setSelected(false);
+    	if (ObjectSpawner.objectA instanceof ParticleEntity && ObjectSpawner.objectB instanceof PolygonRigidBody) {
+    		ObjectSpawner.spawnJoint((AnchorPane)paneSettings.lookup("#root"));
+    	}
+    }
+    
     
     @FXML
     void onSaveScene(ActionEvent event) {
     	String filename = tfSaveSceneName.getText();
     	if (filename == "") { return; }
-    	File tmpDir = new File(filename);
-    	if (tmpDir.exists()) { return; }
     	try {
 			FileOutputStream fileOutputStream = new FileOutputStream(filename);
-			ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);			
-			SerializableObjects obj = new SerializableObjects(sceneObjects.entities, sceneObjects.forceActors);		
+			ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);	
+			ArrayList<String> entityNames = new ArrayList<String>(lvEntities.getItems()); 
+			ArrayList<String> forceNames = new ArrayList<String>(lvForces.getItems());
+			SerializableObjects obj = new SerializableObjects(sceneObjects.entities,
+					sceneObjects.forceActors, entityNames, forceNames);		
 			objectOutputStream.writeObject(obj);
 			objectOutputStream.flush();
 			objectOutputStream.close();
@@ -418,10 +606,13 @@ public class EngineMasterController {
 			lvEntities.getItems().clear();
 			lvForces.getItems().clear();
 			for (int i =0; i < objects.entities.size();i++) {
-				sceneObjects.addEntity("entity:" + i, objects.entities.get(i));
+				sceneObjects.addEntity(objects.entityNames.get(i), objects.entities.get(i));
 			}
 			for (int i = 0;i < objects.forceActors.size();i++) {
-				sceneObjects.addForce("Force:" + i, objects.forceActors.get(i));
+				sceneObjects.addForce(objects.forceNames.get(i), objects.forceActors.get(i));
+				if (objects.forceActors.get(i) instanceof GlobalGravity) {
+					((GlobalGravity)(objects.forceActors.get(i))).objects = sceneObjects.entities;
+				}
 			}			
 			Random random = new Random();
 			for (int i = 0;i < sceneObjects.entities.size();i++) {
@@ -429,11 +620,9 @@ public class EngineMasterController {
 						Color.rgb(random.nextInt(200) + 55 , random.nextInt(200) + 55, random.nextInt(200) + 55);
 			}
 			objectInputStream.close();
-			canvas.drawFrame(0);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-      
     }
 }

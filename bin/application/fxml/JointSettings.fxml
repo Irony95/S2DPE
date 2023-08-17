@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane id="root" prefHeight="138.0" prefWidth="290.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Label layoutX="14.0" layoutY="5.0" text="Object Name" AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="5.0" />
+      <TextField id="tfName" fx:id="tfName" layoutX="224.0" layoutY="26.0" text="Joint" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="0.0" />
+      <Label layoutX="8.0" layoutY="65.0" text="Select Object A" AnchorPane.leftAnchor="14.0" />
+      <Label layoutX="8.0" layoutY="98.0" text="Select Object B" AnchorPane.leftAnchor="14.0" />
+      <Label layoutX="8.0" layoutY="36.0" text="Const. Torque" AnchorPane.leftAnchor="14.0" />
+      <TextField id="tfTorque" fx:id="tfName1" layoutX="120.0" layoutY="31.0" text="0" AnchorPane.rightAnchor="20.0" />
+      <ToggleButton id="btnObjectA" layoutX="178.0" layoutY="62.0" mnemonicParsing="false" text="Object A" AnchorPane.rightAnchor="20.0" />
+      <ToggleButton id="btnObjectB" layoutX="194.0" layoutY="93.0" mnemonicParsing="false" text="Object B" AnchorPane.rightAnchor="20.0" />
+   </children>
+</AnchorPane>

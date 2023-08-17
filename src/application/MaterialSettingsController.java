@@ -6,6 +6,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import physicsComponents.*;
+import world.SceneObjects;
 
 public class MaterialSettingsController {
 	

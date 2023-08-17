@@ -2,6 +2,8 @@ package physicsComponents;
 
 import org.apache.commons.math4.legacy.linear.RealVector;
 
+import Solvers.ImpulseSolver;
+import Solvers.ODESolver;
 import application.EngineProperties;
 import javafx.scene.paint.Color;
 
@@ -16,7 +18,7 @@ public abstract class EntityUnit implements Serializable {
 	public double mass;
 	public double invMass;
 	protected RealVector accumulatedForce;
-	Material material;
+	public Material material;
 	public transient Color color;
 	
 	public double inertia = 100;
@@ -42,7 +44,7 @@ public abstract class EntityUnit implements Serializable {
 		double deltaVX = ODESolver.RK4(velocity.getEntry(0), 0,
 				deltaTime,(y, t) -> (acceleration.getEntry(0)));
 		velocity.addToEntry(0, deltaVX); 
-		double deltaVY = ODESolver.RK4(velocity.getEntry(1), 0,
+		double deltaVY = ODESolver.Euler(velocity.getEntry(1), 0,
 				deltaTime,(y, t) -> (acceleration.getEntry(1)));
 		velocity.addToEntry(1, deltaVY);
 		
@@ -61,7 +63,8 @@ public abstract class EntityUnit implements Serializable {
 	
 	public void applyAirResistance() {
 		//no movement, no unit vector aka no air resistance
-		if (velocity.getL1Norm() == 0) { return; } 
+		if (Math.abs(velocity.getEntry(0)) < ImpulseSolver.EPISILON &&
+				Math.abs(velocity.getEntry(1)) < ImpulseSolver.EPISILON) { return; } 
 		RealVector dragNormal = velocity.mapMultiply(-1).unitVector();
 		double j = (1.0/2) * EngineProperties.airDensity
 				* Math.pow(velocity.getL1Norm(), 2);

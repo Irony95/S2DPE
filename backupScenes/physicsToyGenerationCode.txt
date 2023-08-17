@@ -1,0 +1,96 @@
+////		//double pendulum
+//		ParticleEntity particle1 = new ParticleEntity(300, 100, 0, 0, stationaryMat, Color.BLUE);
+//		ParticleEntity particle2 = new ParticleEntity(500, 100, 0, 0, losslessMat, Color.GREEN);
+//		ParticleEntity particle3 = new ParticleEntity(500, 300, 0, 0, losslessMat, Color.RED);
+//
+//		Spring spring = new Spring((EntityUnit)particle1, (EntityUnit)particle2, 99999, 200.0, 0);
+//		Spring spring2 = new Spring((EntityUnit)particle2, (EntityUnit)particle3, 99999, 200.0, 0);
+//
+//		sceneObjects.addForce("Wire 1", spring);
+//		sceneObjects.addForce("Wire 2", spring2);
+//		sceneObjects.addEntity("Anchor", particle1);
+//		sceneObjects.addEntity("Mid Particle", particle2);
+//		sceneObjects.addEntity("EndParticle",particle3);
+		
+		//random particles
+//		for (int i = 0;i < 200;i ++) {
+//				CircleRigidBody ball = new CircleRigidBody(random.nextInt(600) + 50, random.nextInt(100)+ 50,
+//						0, 0, simpleMat, random.nextInt(15) + 5, 
+//						Color.rgb(random.nextInt(200) + 55 , random.nextInt(200) + 55, random.nextInt(200) + 55));
+//			sceneObjects.addEntity("ball" + String.valueOf(i), ball);
+//		}
+
+		//Blender
+//		PolygonRigidBody polyBody = PolygonRigidBody.Builder.newInstance()
+//		.setColor(Color.YELLOW)
+//		.setRotations(0, 0.0)
+//		.setVelocity(0, 00)
+//		.addPoint(300, 0)			
+//		.addPoint(300, 50)
+//		.addPoint(0, 50)
+//		.build(50, 175, simpleMat);
+//		sceneObjects.addEntity("blade", polyBody);
+//		
+//		for (int i = 0;i < 200;i ++) {
+//		CircleRigidBody ball = new CircleRigidBody(random.nextInt(600) + 50, random.nextInt(100)+ 50,
+//				0, 0, simpleMat, random.nextInt(15) + 5, 
+//				Color.rgb(random.nextInt(200) + 55 , random.nextInt(200) + 55, random.nextInt(200) + 55));
+//	sceneObjects.addEntity("ball" + String.valueOf(i), ball);
+//}
+//		
+//		ParticleEntity anchor = new ParticleEntity(200, 200, 0, 0, stationaryMat, Color.RED);
+//		sceneObjects.addEntity("anchor", anchor);
+//		Joint j = new Joint(anchor, polyBody, 9999999);
+//		sceneObjects.addForce("Joint", j);		
+
+		
+//		//demolition
+		for (int i = 0;i < 2;i ++) {
+			for (int j = 0;j < 10;j ++) {
+				
+				PolygonRigidBody polyBody = PolygonRigidBody.Builder.newInstance()
+						.setColor(Color.rgb(random.nextInt(200) + 55 , random.nextInt(200) + 55, random.nextInt(200) + 55))
+						.setRotations(0, 0.0)
+						.setVelocity(0, 00)
+						.addPoint(0, 50)			
+						.addPoint(50, 50)
+						.addPoint(50, 0)
+						.build(200 + i*50, 580-j*50, simpleMat);
+				sceneObjects.addEntity("cube " + String.valueOf(i+j), polyBody);
+				
+			}
+		}		
+
+		CircleRigidBody ball = new CircleRigidBody(650, 200,
+				-1000, 00, simpleMat, 50, 
+				Color.RED);
+		sceneObjects.addEntity("DeathBall", ball);
+		//random triangles
+//		for (int i = 0;i < 40;i ++) {
+//			PolygonRigidBody polyBody = PolygonRigidBody.Builder.newInstance()
+//					.setColor(Color.rgb(random.nextInt(200) + 55 , random.nextInt(200) + 55, random.nextInt(200) + 55))
+//					.setRotations(0, random.nextDouble(2*Math.PI))
+//					.setVelocity(0, 00)
+//					.addPoint(50, 0)			
+//					.addPoint(50, 50)
+//					.build(random.nextInt(900), random.nextInt(700), simpleMat);
+//			sceneObjects.addEntity("triangle " + String.valueOf(i), polyBody);
+//		}
+		
+//		//newtons Cradle
+//		ParticleEntity anchor = new ParticleEntity(300, 100, 0, 0, stationaryMat, Color.RED);
+//		CircleRigidBody newtonsBall = new CircleRigidBody(100, 100, 0, 0, losslessMat, 50, Color.BLUE);
+//		Spring wire = new Spring(anchor, newtonsBall, 99999, 200);
+//		sceneObjects.addEntity("Anchor", anchor);
+//		sceneObjects.addEntity("Ball", newtonsBall);
+//		sceneObjects.addForce("Wiree", wire);
+//		
+//		for (int i = 0;i < 5;i ++) {
+//			anchor = new ParticleEntity(400 + i * 100, 100, 0, 0, stationaryMat, Color.RED);
+//			newtonsBall = new CircleRigidBody(400 + i * 100, 300, 0, 0, losslessMat, 50, Color.BLUE);
+//			wire = new Spring(anchor, newtonsBall, 99999, 200);
+//			sceneObjects.addEntity("Anchor " + i, anchor);
+//			sceneObjects.addEntity("Ball " + i, newtonsBall);
+//			
+//			sceneObjects.addForce("wire " + i, wire);
+//			}

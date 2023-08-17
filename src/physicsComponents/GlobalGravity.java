@@ -6,11 +6,11 @@ import org.apache.commons.math4.legacy.linear.ArrayRealVector;
 import org.apache.commons.math4.legacy.linear.RealVector;
 
 import application.EngineProperties;
-import application.SceneObjects;
+import world.SceneObjects;
 
 public class GlobalGravity extends ForceActor {
 	private static final long serialVersionUID = 2741073630413519563L;
-	ArrayList<EntityUnit> objects;
+	public ArrayList<EntityUnit> objects;
 	RealVector gravity;
 	
 	public GlobalGravity(double fx, double fy, ArrayList<EntityUnit> objects) {

@@ -13,7 +13,7 @@ public class Main extends Application {
 	public void start(Stage primaryStage) {
 		try {
 			//creating the Editor Window
-			FXMLLoader loader = new FXMLLoader(getClass().getResource("EngineMaster.fxml"));
+			FXMLLoader loader = new FXMLLoader(getClass().getResource("fxml/EngineMaster.fxml"));
 			AnchorPane root = (AnchorPane)loader.load();
 			Scene scene = new Scene(root);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
@@ -22,7 +22,7 @@ public class Main extends Application {
 			primaryStage.show();
 			
 			Stage engineCanvasWindow = new Stage();
-			EngineCanvas canvas = new EngineCanvas();
+			EngineWorld canvas = new EngineWorld();
 			canvas.start(engineCanvasWindow);
 			
 			primaryStage.setOnCloseRequest(event -> {
@@ -34,6 +34,7 @@ public class Main extends Application {
 			
 			EngineMasterController masterController = loader.getController();
 			masterController.setCanvas(canvas);
+			canvas.setMasterController(masterController);
 			
 		} catch(Exception e) {
 			e.printStackTrace();

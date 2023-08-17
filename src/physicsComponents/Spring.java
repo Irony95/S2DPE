@@ -16,19 +16,33 @@ public class Spring extends ForceActor implements Drawable {
 	EntityUnit objectB;
 	
 	private double k;
+	private double dampingCoeff;
 	private double restLength;
 	private int coils;
-	public Spring(EntityUnit objectA, EntityUnit objectB, double k, double restLength) {
+	public Spring(EntityUnit objectA, EntityUnit objectB, double k, double restLength, double dampingCoeff) {
 		this.objectA = objectA;
 		this.objectB = objectB;
-		this.restLength = restLength;
+		if (restLength < 0) { this.restLength = 0; }
+		else { this.restLength = restLength; }
+		
 		if (k < 0) { this.k = 0; }
 		else if (k > EngineProperties.maxSpringConstant) {
 			this.k = EngineProperties.maxSpringConstant;
 		}
 		else { this.k = k; }
 		
-		coils = (int) (EngineProperties.kToCoils * Math.log(k * restLength));
+		if (dampingCoeff < 0) { this.dampingCoeff = 0; }
+		else if (dampingCoeff > EngineProperties.maxDampingConstant) {
+			this.dampingCoeff = EngineProperties.maxDampingConstant;
+		}
+		else { this.dampingCoeff = dampingCoeff; }
+		
+		if (restLength == 0) {
+			coils = (int) (EngineProperties.kToCoils * 10);
+		}
+		else {			
+			coils = (int) (EngineProperties.kToCoils * Math.log(k * restLength));
+		}
 	}
 	
 	@Override
@@ -39,6 +53,11 @@ public class Spring extends ForceActor implements Drawable {
 		objectA.addForce(normal.mapMultiply(displacement * k));
 		//points will have inverse Normals
 		objectB.addForce(normal.mapMultiply(-displacement * k));
+		//RealVector absNormal = new ArrayRealVector(new double[] {Math.abs(normal.getEntry(0)),Math.abs(normal.getEntry(1))});
+		if (EngineProperties.applyFriction) {
+			objectA.addForce(objectA.velocity.mapMultiply(-dampingCoeff));
+			objectB.addForce(objectB.velocity.mapMultiply(-dampingCoeff));
+		}
 	}
 	
 	

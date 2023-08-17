@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.paint.Color?>
+
+<AnchorPane id="root" prefHeight="116.0" prefWidth="290.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Label layoutX="9.0" layoutY="30.0" text="Object Name" AnchorPane.leftAnchor="9.0" AnchorPane.topAnchor="0.0" />
+      <Label layoutX="13.0" layoutY="65.0" text="Color" AnchorPane.leftAnchor="13.0" />
+      <TextField id="tfName" fx:id="tfName" layoutX="224.0" layoutY="26.0" text="Particle" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="0.0" />
+      <ColorPicker id="cpColor" layoutX="145.0" layoutY="61.0" AnchorPane.rightAnchor="20.333333333333314">
+         <value>
+            <Color red="1.0" />
+         </value></ColorPicker>
+      <Label layoutX="9.0" layoutY="35.0" text="Custom Velocity" AnchorPane.leftAnchor="9.0" />
+      <TextField id="tfVelocityX" fx:id="tfRadius1" layoutX="133.0" layoutY="31.0" prefHeight="25.0" prefWidth="51.0" text="0" AnchorPane.rightAnchor="105.66666666666666" />
+      <TextField id="tfVelocityY" fx:id="tfRadius11" layoutX="217.0" layoutY="31.0" prefHeight="25.0" prefWidth="51.0" text="0" />
+      <Label layoutX="117.0" layoutY="35.0" prefHeight="17.0" prefWidth="7.0" text="X" />
+      <Label layoutX="195.0" layoutY="35.0" text="Y" />
+   </children>
+</AnchorPane>

@@ -3,13 +3,16 @@ package physicsComponents;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
+import world.SceneObjects;
 
 import java.util.ArrayList;
 import org.apache.commons.math4.legacy.linear.RealVector;
 
-import application.EngineCanvas;
+import Solvers.ImpulseSolver;
+import Solvers.ImpulseSolver.VecMath;
+import Solvers.ODESolver;
+import application.EngineWorld;
 import application.EngineProperties;
-import application.SceneObjects;
 
 import org.apache.commons.math4.legacy.linear.ArrayRealVector;
 import org.apache.commons.math4.legacy.linear.MatrixUtils;
@@ -83,6 +86,8 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 		}
 		color = builder.color;
 		updateTranslatedPoints();
+		position.addToEntry(0, avgX);
+		position.addToEntry(1, avgY);
 		
 		if (material.customMass >= 0) {
 			this.mass = material.customMass;
@@ -97,7 +102,7 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 				RealVector p1 = points[i];
 				RealVector p2 = points[(i + 1) % points.length];
 				
-				double D = cross(p1, p2);
+				double D = VecMath.cross(p1, p2);
 				double triangleArea = 0.5f * D;
 				area += triangleArea;
 				
@@ -105,9 +110,10 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 				double inty2 = p1.getEntry(1) * p1.getEntry(1) + p2.getEntry(1) * p1.getEntry(1) + p2.getEntry(1) * p2.getEntry(1);
 				inertia += (0.25f * k_inv3 * D) * (intx2 + inty2);
 			}
-			this.mass = area * material.density;
+			this.mass = Math.abs(area * material.density);
 			this.invMass = 1.0/this.mass;
 			this.inertia *= material.density;
+			this.inertia = Math.abs(this.inertia);
 			this.invInertia = 1.0/this.inertia;
 			
 			if (material.customInertia != -1) {
@@ -119,7 +125,7 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 	}
 
 	@Override
-	public void vsCircle(EntityUnit object, CircleCollider collider) {
+	public void vsCircle(EntityUnit object, CircleCollider collider, double dt) {
 		
 		double bestSeperation = Double.NEGATIVE_INFINITY;
 		int bestIndex = -1;
@@ -183,18 +189,15 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 		}
 		RealVector rA = contactPoint.subtract(position);
 		RealVector[] impulses = ImpulseSolver.solveImpulse(this, object, contactNormal, this,  rA);
-
 		if (impulses == null || impulses[0] == null) { return; }
-		velocity = velocity.subtract(impulses[0].mapMultiply(invMass));
-		addAngularVelocity(-getInvInertia() * cross(rA, impulses[0]));
-		object.velocity = object.velocity.add(impulses[0].mapMultiply(object.invMass));
-		
+		addForce(impulses[0].mapDivide(dt).mapMultiply(-1));
+		addAngularVelocity(-getInvInertia() * VecMath.cross(rA, impulses[0]));
+		object.addForce(impulses[0].mapDivide(dt));
 		if (EngineProperties.applyFriction && impulses[1] != null) {				
-
-			velocity = velocity.subtract(impulses[1].mapMultiply(invMass));
-			addAngularVelocity(-getInvInertia() * cross(rA, impulses[1]));
-
-			object.velocity = object.velocity.add(impulses[1].mapMultiply(object.invMass));
+			
+			addForce(impulses[1].mapDivide(dt).mapMultiply(-1));
+			addAngularVelocity(-getInvInertia() * VecMath.cross(rA, impulses[1]));
+			object.addForce(impulses[1].mapDivide(dt));
 		}
 		
 		//positional correction
@@ -202,7 +205,7 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 	}
 
 	@Override
-	public void vsCanvas(double width, double height) {
+	public void vsCanvas(double width, double height, double dt) {
 		RealVector contactPoint = new ArrayRealVector(new double[] {0,0});
 		int contactCount = 0;
 		RealVector normal = null;
@@ -214,7 +217,7 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 				normal = new ArrayRealVector(new double[] {1, 0});
 				contactPoint = contactPoint.add(point);
 				contactCount++;
-				
+		
 				double penetrationDepth = Math.abs(point.getEntry(0)) ;
 				position.addToEntry(0, penetrationDepth * 0.5);
 			}
@@ -229,20 +232,24 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 		}
 		if (contactCount > 0) {
 			contactPoint = contactPoint.mapDivide(contactCount);
-			
 			RealVector rA = contactPoint.subtract(position);
 			RealVector[] impulses = ImpulseSolver.solveImpulse(this, this, normal, rA);
 			
-			if (impulses != null && impulses[0] != null) { 			
-				velocity = velocity.subtract(impulses[0].mapMultiply(invMass));
-				addAngularVelocity(-invInertia * cross(rA, impulses[0]));
+			if (impulses != null && impulses[0] != null) {
+				addForce(impulses[0].mapDivide(dt).mapMultiply(-1));
+//				velocity = velocity.subtract(impulses[0].mapMultiply(invMass));
+				addAngularVelocity(-invInertia * VecMath.cross(rA, impulses[0]));
 				
 				if (EngineProperties.applyFriction && impulses[1] != null) {	
-					velocity = velocity.add(impulses[1].mapMultiply(invMass));
-					addAngularVelocity(invInertia * cross(rA, impulses[1]));
+//					velocity = velocity.add(impulses[1].mapMultiply(invMass));
+					addForce(impulses[1].mapDivide(dt));
+					addAngularVelocity(invInertia * VecMath.cross(rA, impulses[1]));
 				}
 			}
 		}
+		contactPoint = new ArrayRealVector(new double[] {0,0});
+		contactCount = 0;
+		normal = null;
 		//on the Y axis
 		for (int i = 0;i < translatedPoints.length;i++) {
 			RealVector point = translatedPoints[i].add(position);
@@ -258,37 +265,37 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 				normal = new ArrayRealVector(new double[] {0, -1});
 				contactPoint = contactPoint.add(point);
 				contactCount++;
-				
+
 				double penetrationDepth = -Math.abs(point.getEntry(1)-height);
 				position.addToEntry(1, penetrationDepth * 0.5);
 			}
 		}
 		if (contactCount > 0) {
 			contactPoint = contactPoint.mapDivide(contactCount);
-			
+
 			RealVector rA = contactPoint.subtract(position);
 			RealVector[] impulses = ImpulseSolver.solveImpulse(this, this, normal, rA);
 			
 			if (impulses != null && impulses[0] != null) { 
-				velocity = velocity.subtract(impulses[0].mapMultiply(invMass));
-				addAngularVelocity(-invInertia * cross(rA, impulses[0]));
+				addForce(impulses[0].mapDivide(dt).mapMultiply(-1));
+				addAngularVelocity(-invInertia * VecMath.cross(rA, impulses[0]));
 				
 				if (EngineProperties.applyFriction && impulses[1] != null) {
-					velocity = velocity.add(impulses[1].mapMultiply(invMass));
-					addAngularVelocity(invInertia * cross(rA, impulses[1]));
+					addForce(impulses[1].mapDivide(dt));
+					addAngularVelocity(invInertia * VecMath.cross(rA, impulses[1]));
 				}
 			}
 		}
 	}
 	
 	@Override
-	public void vsPolygon(EntityUnit object, PolygonCollider collider) {
+	public void vsPolygon(EntityUnit object, PolygonCollider collider, double dt) {
 		double[] penetration = findAxisOfLeastPenetration(object, collider);
+		
 		if (penetration[1] >= 0) { return; }
 		double[] colliderPenetration = collider.findAxisOfLeastPenetration(this, this);
 		if (colliderPenetration[1] >= 0) { return; }
 		
-		boolean flip = false;
 		RealVector[] refPoints = new RealVector[2];
 		EntityUnit referenceUnit = null;
 		PolygonCollider referenceCollider = null;
@@ -308,9 +315,6 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 			incPoints[0] = collider.getPoints()[(int) colliderPenetration[0]];
 			index = (int) (colliderPenetration[0] == collider.getPoints().length-1 ? 0 : colliderPenetration[0] + 1);
 			incPoints[1] = collider.getPoints()[index];
-			
-			flip = true;
-			//System.out.println("reference color is " + (color.toString()));
 		}
 		else {
 			referenceUnit = object;
@@ -324,9 +328,6 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 			incPoints[0] = translatedPoints[(int) penetration[0]].add(position);
 			index = (int) (penetration[0] == translatedPoints.length-1 ? 0 : penetration[0] + 1);
 			incPoints[1] = translatedPoints[index].add(position);
-			
-			//System.out.println("reference color is " + ((PolygonRigidBody)object).color.toString());
-
 		}
 		RealVector refVector = refPoints[1].subtract(refPoints[0]).unitVector();
 		
@@ -338,14 +339,19 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 		incPoints = ImpulseSolver.clipPoints(incPoints[0], incPoints[1], refVector.mapMultiply(-1), -offset);
 		if (incPoints[0] == null || incPoints[1] == null) { return; }
 		
+		
 		RealVector refNormal = new ArrayRealVector(new double[] {refVector.getEntry(1), -refVector.getEntry(0)});
-		if (flip) { refNormal = refNormal.mapMultiply(-1); }
-		//System.out.println(refNormal.toString());
+
+		//if for some reason normals are wrong, due in part to the way vertices are placed
+		if (refNormal.dotProduct(incidentUnit.position.subtract(referenceUnit.position)) < 0) {
+			refNormal = refNormal.mapMultiply(-1);
+		}
 		
 		double penetrationDistance = 0;
 		RealVector contactPoint = new ArrayRealVector(new double[] {0, 0});
 		int contactCount = 0;
 		double seperation = refNormal.dotProduct(incPoints[0]) - refNormal.dotProduct(refPoints[0]);
+
 		if (seperation <= 0) {
 			contactPoint = contactPoint.add(incPoints[0]);
 			contactCount++;
@@ -356,30 +362,31 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 			contactPoint = contactPoint.add(incPoints[1]);
 			contactCount++;
 			penetrationDistance += -seperation;
-		}
+		}		
 		if (contactCount == 0) { return; }
+
 		contactPoint = contactPoint.mapDivide(contactCount);
-		penetrationDistance /= contactCount;
+		penetrationDistance /= contactCount;		
 		
 		RealVector rA = contactPoint.subtract(referenceUnit.position);
 		RealVector rB = contactPoint.subtract(incidentUnit.position);
-		
+
 		RealVector[] impulses = ImpulseSolver.solveImpulse(referenceUnit, incidentUnit, refNormal,
 				referenceCollider, incidentCollider,
 				rA, rB);
 		
 		if (impulses == null || impulses[0] == null) { return; }
-		referenceUnit.velocity = referenceUnit.velocity.subtract(impulses[0].mapMultiply(referenceUnit.invMass));
-		referenceCollider.addAngularVelocity(-referenceCollider.getInvInertia() * cross(rA, impulses[0]));
-		incidentUnit.velocity = incidentUnit.velocity.add(impulses[0].mapMultiply(incidentUnit.invMass));
-		incidentCollider.addAngularVelocity(incidentCollider.getInvInertia() * cross(rB, impulses[0]));
+		referenceUnit.addForce(impulses[0].mapDivide(dt).mapMultiply(-1));
+		referenceCollider.addAngularVelocity(-referenceCollider.getInvInertia() * VecMath.cross(rA, impulses[0]));
+		incidentUnit.addForce(impulses[0].mapDivide(dt));
+		incidentCollider.addAngularVelocity(incidentCollider.getInvInertia() * VecMath.cross(rB, impulses[0]));
 		
 		if (EngineProperties.applyFriction && impulses[1] != null) {					
-			referenceUnit.velocity = referenceUnit.velocity.subtract(impulses[1].mapMultiply(referenceUnit.invMass));
-			referenceCollider.addAngularVelocity(-referenceCollider.getInvInertia() * cross(rA, impulses[1]));
+			referenceUnit.addForce(impulses[1].mapDivide(dt).mapMultiply(-1));
+			referenceCollider.addAngularVelocity(-referenceCollider.getInvInertia() * VecMath.cross(rA, impulses[1]));
 
-			incidentUnit.velocity = incidentUnit.velocity.add(impulses[1].mapMultiply(incidentUnit.invMass));
-			incidentCollider.addAngularVelocity(incidentCollider.getInvInertia() * cross(rB, impulses[1]));
+			referenceUnit.addForce(impulses[1].mapDivide(dt));
+			incidentCollider.addAngularVelocity(incidentCollider.getInvInertia() * VecMath.cross(rB, impulses[1]));
 		}
 		
 		ImpulseSolver.positionalCorrection(referenceUnit, incidentUnit, penetrationDistance, refNormal);
@@ -425,17 +432,6 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 		return bestVertex;
 	}
 	
-	public double cross(RealVector a, RealVector b) {
-		return a.getEntry(0) * b.getEntry(1) - a.getEntry(1) * b.getEntry(0);
-	}
-	
-	public RealVector cross(RealVector a, double b) {
-		return new ArrayRealVector(new double[] {
-				a.getEntry(1) * -b,
-				a.getEntry(0) * b
-		});
-	}
-	
 	@Override
 	public void applyRotationalAirResistance() {
 		if (angularVelocity == 0) { return; } 
@@ -478,7 +474,7 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 		for (int i = 0;i < functionalPoints.size();i++) {
 			RealVector radius = translatedPoints[functionalPointsIndex.get(i)];
 			// torque = radius X force
-			double addedTorque = cross(radius, functionalPoints.get(i).accumulatedForce);
+			double addedTorque = VecMath.cross(radius, functionalPoints.get(i).accumulatedForce);
 			torque += addedTorque;
 			functionalPoints.get(i).resetForce();
 		}
@@ -504,7 +500,8 @@ public class PolygonRigidBody extends EntityUnit implements Drawable, PolygonCol
 		yPoints[points.length] = translatedPoints[0].getEntry(1) + position.getEntry(1);
 		
 		if (velocity.getL1Norm() > 10) {
-			EngineCanvas.DrawUtils.drawArrow(gc, position, velocity.unitVector(), 30);			
+			EngineWorld.DrawUtils.drawArrow(gc, position, velocity.unitVector(), 30);			
+			EngineWorld.DrawUtils.writeVelocity(gc, position, velocity);
 		}
 		gc.setFill(Color.WHITE);
 		gc.setTextAlign(TextAlignment.CENTER);
